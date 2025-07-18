@@ -1,33 +1,50 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "fileAI: A powerful platform for file transformation, data collection and automation workflows"
+description: "Easily convert unstructured data into LLM-ready formats, extract insights across files, compare, validate and gather online data — all within a single streamlined workflow."
+sidebarTitle: "Overview"
+icon: "circle-info"
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Welcome to fileAI!
 
-## Welcome
+We are an intelligent data preparation platform that transforms unstructured inputs and automates extraction into structured, machine-readable formats — all within a single workflow.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+Supports single-file extraction and web data retrieval — *with cross-file extraction coming soon* — all designed for accuracy and zero hallucinations.
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+## About this Guide
 
-## Authentication
+This guide provides an overview of our API endpoints, example use cases, configuration best practices as well as frequently asked questions.
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+* For more code specific information on our endpoints, please refer to our[ API Reference](https://developers.file.ai/reference)
+* If you need any further help, feel free to reach out to our team at [support@file.ai](https://developers.file.ai/docs/)
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
-```
+## Key Features
+
+These API endpoints are the building blocks for all your file ingestion needs. They can be used individually or in conjunction to create powerful end-to-end workflows.
+
+<CardGroup cols={2}>
+  <Card title="File Upload & Management" iconType="solid" icon="cloud-arrow-up">
+    Upload, retrieve and manage files in various formats in fileAI (includes sources, citations, location data and more)
+  </Card>
+
+  <Card title="Smart File Processing" iconType="solid" icon="wand-magic-sparkles">
+    Proprietary AI OCR with cross-file extraction and custom AI schemas
+  </Card>
+
+  <Card title="Dynamic AI Schemas" iconType="solid" icon="diagram-project">
+    Auto-generated data structures that adapt to your files, fetch cross-file data (coming soon) and online data all in one workflow
+  </Card>
+
+  <Card title="Enterprise Ready" iconType="solid" icon="shield-check">
+    Secure, scalable, and built for production workloads (SOCII, ISO27001)
+  </Card>
+
+  <Card title="Easy Integration" iconType="solid" icon="code">
+    RESTful API with callback URLs for real-time updates
+  </Card>
+
+  <Card title="Health Check Endpoint" iconType="solid" icon="heart-pulse">
+    Quickly verify system status and availability
+  </Card>
+</CardGroup>
+

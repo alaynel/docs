@@ -1,217 +1,607 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
-  },
-  "servers": [
-    {
-      "url": "http://sandbox.mintlify.com"
-    }
-  ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
+  "openapi": "3.0.0",
   "paths": {
-    "/plants": {
-      "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
+    "/v1/files/preview": {
+      "post": {
+        "operationId": "PublicAPIController_createFilePreview",
+        "summary": "Create a file preview",
+        "description": "Create a file preview using a S3 Path.The input should contain the following information:- s3Path: the path of the file in the S3 bucket",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "s3Path": {
+                    "type": "string",
+                    "description": "S3 Path"
+                  }
+                },
+                "required": ["s3Path"],
+                "x-readme-ref-name": "CreateFilePreviewForPAInput"
+              }
             }
           }
-        ],
+        },
         "responses": {
-          "200": {
-            "description": "Plant response",
+          "201": {
+            "description": "The signed URL for the file preview is retrieved",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+                  "example": {
+                    "signedUrl": "https://s3.amazonaws.com/bucket/upload/file.txt?AWSAccessKeyId=AKIAIOSFODNN7EXAMPLE&Signature=1%2F6%2BN7Z6h%2F7oV7Z6i%2F9oV7Z4%3D&Expires=3600"
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Unexpected error",
+          "401": {
+            "description": "Invalid API key | API key is missing",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "example": {
+                    "message": "Invalid API key | API key is missing",
+                    "error": "Unauthorized",
+                    "statusCode": 401
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied. You are in readonly mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Access denied. You are in readonly mode.",
+                    "error": "Forbidden",
+                    "statusCode": 403
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid s3Path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid s3Path.",
+                    "error": "Unprocessable Entity",
+                    "statusCode": 422
+                  }
                 }
               }
             }
           }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
         },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+        "tags": ["Public API V1"],
+        "security": [
+          {
+            "x-api-key": []
           }
-        }
+        ]
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/v1/schemas": {
+      "get": {
+        "operationId": "PublicAPIController_getAllSchemas",
+        "summary": "Get all schemas",
+        "description": "This endpoint is used to get all schemas.The response will contain a list of all schemas that are available for the current user in the current workspace.The schemas field is an array of schemas.",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
+            "name": "schemaIds",
+            "required": false,
+            "in": "query",
+            "description": "Schema Ids",
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
+            }
+          },
+          {
+            "name": "uploadIds",
+            "required": false,
+            "in": "query",
+            "description": "Upload Ids",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "default": "createdAt",
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "ASC",
+              "enum": ["ASC", "DESC"],
+              "type": "string"
             }
           }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
+          "200": {
+            "description": "The list of schemas",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "example": {
+                    "schemas": [
+                      {
+                        "id": "5f5f726eea75272d54e1e1e1",
+                        "fields": [
+                          {
+                            "id": "5f5f726eea75272d54e1e1e2"
+                          }
+                        ],
+                        "blueprintId": "5f5f726eea75272d54e1e1e3",
+                        "originalSchemaId": "5f5f726eea75272d54e1e1e4",
+                        "schemaHistoryId": "5f5f726eea75272d54e1e1e5",
+                        "schemaHistoryVersionNumber": 1,
+                        "fileId": "5f5f726eea75272d54e1e1e6",
+                        "blueprintMode": "USER",
+                        "schemaType": "SYSTEM",
+                        "state": "ACTIVE",
+                        "usageApprovalState": "APPROVED",
+                        "schemaOverrideType": "OVERRIDE",
+                        "aiSchemaVersion": "5f5f726eea75272d54e1e1e7",
+                        "createdAt": "2020-10-05T14:30:00.000Z",
+                        "updatedAt": "2020-10-05T14:30:00.000Z",
+                        "deletedAt": null,
+                        "deletedBy": null
+                      }
+                    ],
+                    "count": 1,
+                    "currentPage": 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid API key | API key is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid API key | API key is missing",
+                    "error": "Unauthorized",
+                    "statusCode": 401
+                  }
                 }
               }
             }
           }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          }
         },
-        "responses": {
-          "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
+        "tags": ["Public API V1"],
+        "security": [
           {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
+            "x-api-key": []
           }
         ]
       },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
+      "patch": {
+        "operationId": "PublicAPIController_patchSchemaById",
+        "summary": "Patch a schema",
+        "description": "This endpoint is used to patch a schema.The schemaId field is used to specify the schema that should be patched. The fields field is used to specify the fields that should be updated.The fields field is an array of fields.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "The schema to patch",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              },
+              "examples": {
+                "example1": {
+                  "value": {
+                    "schemaId": "5f5f726eea75272d54e1e1e1",
+                    "fields": [
+                      {
+                        "id": "5f5f726eea75272d54e1e1e2",
+                        "title": "Title",
+                        "description": "Description",
+                        "type": "STRING",
+                        "format": "text",
+                        "hidden": false,
+                        "internet_context": false,
+                        "fieldSuggestion": {
+                          "id": "5f5f726eea75272d54e1e1e3",
+                          "name": "Field Suggestion"
+                        },
+                        "items": [],
+                        "value": "Value",
+                        "enumValues": [],
+                        "inlineListType": "SINGLE"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
-        }
+        },
+        "responses": {
+          "200": {
+            "description": "The schema is patched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid API key | API key is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid API key | API key is missing",
+                    "error": "Unauthorized",
+                    "statusCode": 401
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied. You are in readonly mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Access denied. You are in readonly mode.",
+                    "error": "Forbidden",
+                    "statusCode": 403
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid schemaId | Invalid fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid schemaId | Invalid fields",
+                    "error": "Unprocessable Entity",
+                    "statusCode": 422
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Public API V1"],
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ]
       }
     },
+    "/v1/files": {
+      "get": {
+        "operationId": "PublicAPIController_getAllDocuments",
+        "summary": "Get all files",
+        "description": "Get all files of the current organization and workspace.This endpoint is paginated, you can use the 'page' and 'limit' query parameters to control the pagination.",
+        "parameters": [
+          {
+            "name": "fileIds",
+            "required": false,
+            "in": "query",
+            "description": "File Ids",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Field to sort by",
+            "schema": {
+              "default": "createdAt",
+              "example": "createdAt",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "Sort direction",
+            "schema": {
+              "default": "ASC",
+              "enum": ["ASC", "DESC"],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list of files is found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "files": [
+                      {
+                        "id": "6835aca0030a79ffaabca740",
+                        "fileName": "file1.jpg",
+                        "fileType": "image/jpeg",
+                        "fileSize": 261928,
+                        "fileStoragePath": "path/to/file1.jpg",
+                        "fileHash": "be3ef5fbb21e31c1281300b23b1c918a8ba54427c799aea21865f68d5efd01b7",
+                        "fileId": "53d6a0b1-2a8d-4ed9-9e6a-ceaef7ca3908",
+                        "uploadId": "f2538513-f0b9-4aa8-9c57-bc0a85c77de6",
+                        "status": "processed",
+                        "currency": "USD",
+                        "summary": "Example file",
+                        "duplicateToFileId": null,
+                        "referenceId": "1e70a5e860",
+                        "isDuplicate": false,
+                        "isEmbedded": false,
+                        "schemaId": "6835aca6030a79ffaabca742",
+                        "fileClass": "Receipt",
+                        "fileContactId": "6835aca2281d9ed1bab90b11",
+                        "fileContactName": "Example Company",
+                        "createdAt": "2025-05-27T12:14:24.258Z",
+                        "updatedAt": "2025-05-27T12:14:24.258Z"
+                      }
+                    ],
+                    "count": 1,
+                    "currentPage": 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid API key | API key is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid API key | API key is missing",
+                    "error": "Unauthorized",
+                    "statusCode": 401
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Public API V1"],
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "PublicAPIController_deleteManyDocuments",
+        "summary": "Delete multiple files",
+        "description": "This endpoint is used to delete multiple files.The fileIds field is used to specify the files that should be deleted. The files that are specified in the fileIds field will be deleted.If a files is not specified in the fileIds field, the files will not be deleted.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Delete multiple files input",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              },
+              "examples": {
+                "example1": {
+                  "summary": "Delete multiple files",
+                  "value": {
+                    "fileIds": "8123612d-187c-44eb-8ac6-214e68506b7e,8123612d-187c-44eb-8ac6-214e68506b7f"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The files are deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "success": true
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid API key | API key is missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid API key | API key is missing",
+                    "error": "Unauthorized",
+                    "statusCode": 401
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied. You are in readonly mode.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Access denied. You are in readonly mode.",
+                    "error": "Forbidden",
+                    "statusCode": 403
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "message": "Invalid fileIds.",
+                    "error": "Unprocessable Entity",
+                    "statusCode": 422
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Public API V1"],
+        "security": [
+          {
+            "x-api-key": []
+          }
+        ]
+      }
+    },
+  },
+  "info": {
+    "title": "Public API",
+    "description": "\n### Welcome to fileAI’s Public API Documentation.\nThis API allows users to check the health of the system, upload and manage files, and manage AI Schemas.\nShould you have any questions, please reach out to fileAI via the “Contact a Developer” link below.\n\n\n[Contact a Developer](mailto:support@file.ai)\n\n\n### Prerequisites\n\nBefore using our API, please ensure you complete the following prerequisites\n- You must have a fileAI account. Sign up or login [here](https://orion.file.ai/en/sign-up)\n- You must have an API Key. After creating your fileAI account, you can generate your API Key. Refer to the Authentication section below for more details.\n\n\n### Authentication\nAll API requests require an API key for authentication.\n- To obtain your API key, please log in to your fileAI account and navigate to Project Settings in your dashboard\n- Keep your API key secure and do not share it publicly.\n\n![Authentication](https://fileai-static-assets.s3.us-west-2.amazonaws.com/public-api-service/authentication.png)\n\n### How to Use Your API Key\nOnce you have your API key:\n- Click the Authorize button on the top-right of this page\n- Enter your API Key under Value\n- Click Authorize to start making authenticated requests directly from the documentation\n\n![How to Use Your API Key](https://fileai-static-assets.s3.us-west-2.amazonaws.com/public-api-service/how-to-use-api-keys.png)\n    ",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "https://api.orion.file.ai/prod"
+    }
+  ],
+  "components": {
     "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+      "x-api-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key for authentication"
+      }
+    },
+    "schemas": {
+      "UploadFileForPAInput": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "description": "File name",
+            "example": "file.pdf"
+          },
+          "fileType": {
+            "type": "string",
+            "description": "File type",
+            "example": "application/pdf"
+          },
+          "isSplit": {
+            "type": "boolean",
+            "description": "Is split",
+            "example": false
+          },
+          "callbackURL": {
+            "type": "string",
+            "description": "Callback URL",
+            "example": "https://example.com/callback"
+          },
+          "ocrModel": {
+            "type": "string",
+            "description": "OCR model",
+            "example": "google-document-ai-ocr-openai-v1"
+          },
+          "schemaLocking": {
+            "type": "boolean",
+            "description": "Schema locking",
+            "example": false
+          }
+        },
+        "required": ["fileName", "fileType", "isSplit"],
+        "x-readme-ref-name": "UploadFileForPAInput"
+      },
+      "CreateFilePreviewForPAInput": {
+        "type": "object",
+        "properties": {
+          "s3Path": {
+            "type": "string",
+            "description": "S3 Path"
+          }
+        },
+        "required": ["s3Path"],
+        "x-readme-ref-name": "CreateFilePreviewForPAInput"
       }
     }
   }
 }
+
